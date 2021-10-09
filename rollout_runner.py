@@ -62,9 +62,9 @@ def rollout_worker(args, _id, type, task_pipe, result_pipe, data_bucket, models_
                                 np.expand_dims(np.array([reward[agent_id, env_id]], dtype="float32"), 0),
                                 np.expand_dims(np.array([done[env_id]], dtype="float32"), 0),
                                 env_id, type])
-
-			joint_state = next_state
-			frame += args.num_envs
+                                
+            joint_state = next_state
+            frame += args.num_envs
             
             if sum(done) > 0 and sum(done) != len(done):
                 k = None

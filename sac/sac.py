@@ -1,8 +1,8 @@
-from model import QNetwork, ValueNetwork, Actor
+from sac.model import QNetwork, ValueNetwork, Actor
 from torch.optim import Adam
 import torch
 import torch.nn as nn
-import utils
+import sac.utils as utils
 
 
 class SAC(object):

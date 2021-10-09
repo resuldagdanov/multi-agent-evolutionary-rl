@@ -1,5 +1,5 @@
 from torch.multiprocessing import Manager
-from core.mod_utils import compute_stats
+from sac.utils import compute_stats
 import numpy as np
 import random
 import torch

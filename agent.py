@@ -1,9 +1,9 @@
 from torch.multiprocessing import Manager
-from sac import SAC
+from sac.sac import SAC
 from sac.buffer import Buffer
 from sac.utils import hard_update
 from sac.model import Actor
-from neuroevolution import Evolution
+from evolution import Evolution
 import random
 import sys
 
@@ -13,7 +13,7 @@ class Agent:
         self.args = args
         self.id = _id
 
-		# initalize neuroevolution module
+		# initalize evolution module
         self.evolver = Evolution(self.args)
 
 		# initialize population
@@ -98,7 +98,7 @@ class Agent:
                 self.champ_ind = self.evolver.evolve(self.popn, net_inds, self.fitnesses, [], states)
 
 		# reset fitness metrics
-		self.fitnesses = [[] for _ in range(self.args.popn_size)]
+        self.fitnesses = [[] for _ in range(self.args.popn_size)]
         
     def update_rollout_actor(self):
         for actor in self.rollout_actor:
