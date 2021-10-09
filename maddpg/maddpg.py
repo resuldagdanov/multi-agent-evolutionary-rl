@@ -8,9 +8,6 @@ import numpy as np
 import torch
 
 
-
-
-
 class MADDPG:
     def __init__(self, n_agents, dim_obs, dim_act, batch_size, capacity, episodes_before_train):
         
