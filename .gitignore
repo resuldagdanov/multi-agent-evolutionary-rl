@@ -30,4 +30,4 @@ bin-release/
 *.vs
 *.png
 
-saved_ckpt/
+saved_checkpoints/

@@ -26,7 +26,11 @@ All requirements could be installed with:
 pip install -r requirements.txt
 ```
 
-## Environments in PettingZoo (Copied from [Github](https://github.com/PettingZoo-Team/PettingZoo))
+## Environments in PettingZoo ([Github](https://github.com/PettingZoo-Team/PettingZoo))
+
+<p align="center">
+    <img src="images/PettingZoo_Text.png" width="500px"/>
+</p>
 
 [Environments](https://www.pettingzoo.ml/envs)
 
