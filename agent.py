@@ -107,3 +107,26 @@ class Agent:
             
             if self.args.use_gpu:
                 self.algo.policy.cuda()
+
+
+class TestAgent:
+    def __init__(self, args, _id):
+        self.args = args
+        self.id = _id
+
+		# rollout actor is a template used for MP
+        self.manager = Manager()
+        self.rollout_actor = self.manager.list()
+        
+        for _ in range(args.num_agents):
+            self.rollout_actor.append(Actor(args.state_dim, args.action_dim, args.hidden_size))
+            
+    def make_champ_team(self, agents):
+        for agent_id, agent in enumerate(agents):
+            
+            if self.args.popn_size <= 1:
+                agent.update_rollout_actor()
+                hard_update(self.rollout_actor[agent_id], agent.rollout_actor[0])
+                
+            else:
+                hard_update(self.rollout_actor[agent_id], agent.popn[agent.champ_ind])

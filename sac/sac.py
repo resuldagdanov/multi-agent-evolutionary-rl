@@ -13,32 +13,26 @@ class SAC(object):
 		self.gamma = gamma
 		self.tau = 0.005
 		self.alpha = 0.2
-		self.policy_type = "Gaussian"
 		self.target_update_interval = 1
 		self.tracker = utils.Tracker(foldername, ['q_'+savetag, 'qloss_'+savetag, 'value_'+savetag, 'value_loss_'+savetag, 'policy_loss_'+savetag, 'mean_loss_'+savetag, 'std_loss_'+savetag], '.csv',save_iteration=1000, conv_size=1000)
 		self.total_update = 0
 		self.agent_id = id
 		self.actualize = actualize
 
+		self.policy_type = "Gaussian" # TODO: will be removed
+
 		self.critic = QNetwork(self.num_inputs, self.action_space, hidden_size)
 		self.critic_optim = Adam(self.critic.parameters(), lr=critic_lr)
 		self.soft_q_criterion = nn.MSELoss()
 
-		if self.policy_type == "Gaussian":
-			self.policy = Actor(self.num_inputs, self.action_space, hidden_size, policy_type='GaussianPolicy')
-			self.policy_optim = Adam(self.policy.parameters(), lr=actor_lr)
+		self.policy = Actor(self.num_inputs, self.action_space, hidden_size)
+		self.policy_optim = Adam(self.policy.parameters(), lr=actor_lr)
 
-			self.value = ValueNetwork(self.num_inputs, hidden_size)
-			self.value_target = ValueNetwork(self.num_inputs, hidden_size)
-			self.value_optim = Adam(self.value.parameters(), lr=critic_lr)
-			utils.hard_update(self.value_target, self.value)
-			self.value_criterion = nn.MSELoss()
-		else:
-			self.policy = Actor(self.num_inputs, self.action_space, hidden_size, policy_type='DeterministicPolicy')
-			self.policy_optim = Adam(self.policy.parameters(), lr=actor_lr)
-
-			self.critic_target = QNetwork(self.num_inputs, self.action_space, hidden_size)
-			utils.hard_update(self.critic_target, self.critic)
+		self.value = ValueNetwork(self.num_inputs, hidden_size)
+		self.value_target = ValueNetwork(self.num_inputs, hidden_size)
+		self.value_optim = Adam(self.value.parameters(), lr=critic_lr)
+		utils.hard_update(self.value_target, self.value)
+		self.value_criterion = nn.MSELoss()
 
 		self.policy.cuda()
 		self.value.cuda()

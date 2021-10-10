@@ -25,10 +25,8 @@ def weights_init_value_fn(m):
 
 
 class Actor(nn.Module):
-    def __init__(self, num_inputs, num_actions, hidden_size, policy_type):
+    def __init__(self, num_inputs, num_actions, hidden_size):
         super(Actor, self).__init__()
-        
-        self.policy_type = policy_type
         
         self.linear1 = nn.Linear(num_inputs, hidden_size)
         self.linear2 = nn.Linear(hidden_size, hidden_size)

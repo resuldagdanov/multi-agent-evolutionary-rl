@@ -6,7 +6,7 @@ import sys
 
 
 # rollout evaluate an agent in a complete game
-def rollout_worker(args, _id, type, task_pipe, result_pipe, data_bucket, models_bucket, store_transitions):
+def rollout_worker(args, _id, _type, task_pipe, result_pipe, data_bucket, models_bucket, store_transitions):
     env = MultiWalker(args=args)
     
     np.random.seed(_id)
@@ -61,7 +61,7 @@ def rollout_worker(args, _id, type, task_pipe, result_pipe, data_bucket, models_
                                 np.expand_dims(joint_action[agent_id, env_id, :], 0),
                                 np.expand_dims(np.array([reward[agent_id, env_id]], dtype="float32"), 0),
                                 np.expand_dims(np.array([done[env_id]], dtype="float32"), 0),
-                                env_id, type])
+                                env_id, _type])
                                 
             joint_state = next_state
             frame += args.num_envs

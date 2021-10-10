@@ -12,7 +12,6 @@ class Evolution:
 		self.gen = 0
 
 		# import params
-		self.env = args.config.env_choice
 		self.popn_size = args.popn_size
 		self.crossover_prob = args.crossover_prob
 		self.mutation_prob = args.mutation_prob
@@ -25,7 +24,8 @@ class Evolution:
 		self.num_anchors = args.num_anchors
 		self.num_elites = args.num_elites
 		self.num_blends = args.num_blends
-		self.scheme = args.scheme
+
+		self.scheme = "multipoint" # TODO: will be checked and selected
 
 		#RL TRACKERS
 		self.rl_sync_pool = []; self.all_offs = []; self.rl_res = {"elites":0.0, 'selects': 0.0, 'discarded':0.0}; self.num_rl_syncs = 0.0001
