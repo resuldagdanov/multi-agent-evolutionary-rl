@@ -56,7 +56,7 @@ class MultiWalker:
             if self.env_dones[env_id]:
                 joint_obs.append(self.dummy_state)
                 joint_reward.append(self.dummy_reward)
-                joint_done.append(True)
+                joint_done.append([True, True, True])
                 joint_global.append(None)
             
             else:
@@ -81,6 +81,8 @@ class MultiWalker:
 
         joint_obs = np.stack(joint_obs, axis=1)
         joint_reward = np.stack(joint_reward, axis=1)
+
+        # print("Joint Done:", joint_done)
         
         return joint_obs, joint_reward, joint_done, joint_global
 

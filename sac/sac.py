@@ -34,10 +34,10 @@ class SAC(object):
 		utils.hard_update(self.value_target, self.value)
 		self.value_criterion = nn.MSELoss()
 
-		self.policy.cuda()
-		self.value.cuda()
-		self.value_target.cuda()
-		self.critic.cuda()
+		# self.policy.cuda()
+		# self.value.cuda()
+		# self.value_target.cuda()
+		# self.critic.cuda()
 
 		#Statistics Tracker
 		self.q = {'min':None, 'max': None, 'mean':None, 'std':None}

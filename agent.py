@@ -51,7 +51,7 @@ class Agent:
             r *= self.args.reward_scaling
             if self.args.use_gpu:
                 s = s.cuda(); ns = ns.cuda(); a = a.cuda(); r = r.cuda(); done = done.cuda(); global_reward = global_reward.cuda()
-            self.algo.update_parameters(s, ns, a, r, done, global_reward, 1, **td3args)
+            self.algo.update_parameters(s, ns, a, r, done, 1, **td3args)
 
         # reset new frame counter to 0
         self.buffer.pg_frames = 0
@@ -61,32 +61,32 @@ class Agent:
 		# one gen of evolution
         if self.args.popn_size > 1:
             
-            if self.args.scheme == 'multipoint':
+            # if self.args.scheme == 'multipoint':
 			# make sure that the buffer has been refereshed and tensorified
-                buffer_pointer = self.buffer
+            buffer_pointer = self.buffer
+            
+            if buffer_pointer.__len__() < 1000:
+                buffer_pointer.tensorify()
                 
-                if buffer_pointer.__len__() < 1000:
-                    buffer_pointer.tensorify()
-                    
-                if random.random() < 0.01:
-                    buffer_pointer.tensorify()
+            if random.random() < 0.01:
+                buffer_pointer.tensorify()
 
-				# get sample of states from the buffer
-                if buffer_pointer.__len__() < 1000:
-                    sample_size = buffer_pointer.__len__()
-                else:
-                    sample_size = 1000
-                    
-                if sample_size == 1000 and len(buffer_pointer.sT) < 1000:
-                    buffer_pointer.tensorify()
-                    
-                states, _,_,_,_,_ = buffer_pointer.sample(sample_size, pr_rew=0.0, pr_global=0.0)
-                states = states.cpu()
-                
-            elif self.args.scheme == 'standard':
-                states = None
+            # get sample of states from the buffer
+            if buffer_pointer.__len__() < 1000:
+                sample_size = buffer_pointer.__len__()
             else:
-                sys.exit('Unknown Evo Scheme')
+                sample_size = 1000
+                
+            if sample_size == 1000 and len(buffer_pointer.sT) < 1000:
+                buffer_pointer.tensorify()
+                
+            states, _,_,_,_,_ = buffer_pointer.sample(sample_size, pr_rew=0.0, pr_global=0.0)
+            states = states.cpu()
+            # states = None    
+            # elif self.args.scheme == 'standard':
+            #     states = None
+            # else:
+            #     sys.exit('Unknown Evo Scheme')
 
 			# net indices of nets that got evaluated this generation (meant for asynchronous evolution workloads)
             net_inds = [i for i in range(len(self.popn))] # hack for a synchronous run

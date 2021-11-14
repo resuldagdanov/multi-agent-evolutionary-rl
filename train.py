@@ -1,8 +1,10 @@
+import torch.multiprocessing as mp
 from torch.multiprocessing import Process, Pipe
 from sac.utils import pprint, str2bool
 from rollout_runner import rollout_worker
 from agent import Agent, TestAgent
 import sac.utils as utils
+from sac.model import Actor
 import numpy as np
 import torch
 import argparse
@@ -12,12 +14,11 @@ import time
 import os
 import sys
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument('-n_envs', type=int, help='number of parallel environments to be created', default=2)
 parser.add_argument('-n_agents', type=int, help='number of agent in each environment', default=3)
-parser.add_argument('-popsize', type=int, help='evolutionary population size', default=3)
-parser.add_argument('-rollsize', type=int, help='rollout size for agents', default=3)
+parser.add_argument('-popsize', type=int, help='evolutionary population size', default=6)
+parser.add_argument('-rollsize', type=int, help='rollout size for agents', default=3) # rollout ?
 parser.add_argument('-evals', type=int, help='evals to compute a fitness', default=1)
 parser.add_argument('-frames', type=float, help='iteration in millions', default=2)
 parser.add_argument('-filter_c', type=int, help='prob multiplier for evo experiences absorbtion into buffer', default=1)
@@ -27,8 +28,8 @@ parser.add_argument('-savetag', help='saved tag', default='')
 parser.add_argument('-gradperstep', type=float, help='gradient steps per frame', default=1.0)
 parser.add_argument('-pr', type=float, help='prioritization', default=0.0)
 parser.add_argument('-use_gpu', type=str2bool, help='usage of gpu', default=False)
-parser.add_argument('-alz', type=str2bool, help='actualize', default=False)
-parser.add_argument('-cmd_vel', type=str2bool, help='switch to velocity commands', default=True)
+parser.add_argument('-alz', type=str2bool, help='actualize', default=False)  # actualize ?
+parser.add_argument('-cmd_vel', type=str2bool, help='switch to velocity commands', default=True) # velocity commands ? 
 
 
 class Parameters:
@@ -64,7 +65,7 @@ class Parameters:
         self.alpha = 0.2
         self.target_update_interval = 1
 
-        self.state_dim = 33
+        self.state_dim = 31  # for multiwalker 31 ??
         self.action_dim = 4
         
         # mutation and cros-over parameters
@@ -75,9 +76,9 @@ class Parameters:
         self.weight_clamp = 1000000
         self.mut_distribution = 1  # 1-Gaussian, 2-Laplace, 3-Uniform
         self.lineage_depth = 10
-        self.ccea_reduction = "leniency"
+        self.ccea_reduction = "leniency"  # ccea reduction ? 
         self.num_anchors = 5
-        self.num_elites = 4
+        self.num_elites = 2
         self.num_blends = int(0.15 * self.popn_size)
         
         self.num_test = 10
@@ -195,6 +196,7 @@ class MultiagentEvolution:
 		# start evolution rollout
         if self.args.popn_size > 0:
             for pipe, team in zip(self.evo_task_pipes, teams):
+                # print("Team:", team)
                 pipe[0].send(team)
 
 		# start policy gradient rollout
@@ -220,9 +222,18 @@ class MultiagentEvolution:
                 
         all_fits = []
 
-		# join evolution rollouts
+        # for agent in self.agents:
+        #     print("1-) Buffer:",len(agent.buffer.tuples))
+
+        # join evolution rollouts
         if self.args.popn_size > 0:
             for pipe in self.evo_result_pipes:
+                # print("PIPE:\n",pipe)
+                # print("PIPE[1]:\n",pipe[1])
+                
+                # temp = Actor(args.state_dim, args.action_dim, args.hidden_size)
+                # print("temp:",temp)
+                # print("action:",temp.clean_action(joint_state[i, :]))
                 entry = pipe[1].recv()
                 team = entry[0]
                 fitness = entry[1][0]
@@ -236,7 +247,10 @@ class MultiagentEvolution:
 
         pg_fits = []
 
-		# join policy gradient rollouts
+        # for agent in self.agents:
+        #     print("2-) Buffer:",len(agent.buffer.tuples))
+		
+        # join policy gradient rollouts
         if self.args.rollout_size > 0:
             entry = self.pg_result_pipes[1].recv()
             pg_fits = entry[1][0]
@@ -267,7 +281,7 @@ class MultiagentEvolution:
 
 if __name__ == "__main__":
     args = Parameters()
-
+    mp.set_start_method('spawn')
     # initiate tracker
     test_tracker = utils.Tracker(args.metric_save, [args.log_fname], '.csv')
 
@@ -285,13 +299,13 @@ if __name__ == "__main__":
 
         print('Ep:/Frames', gen, '/', multiagent_evolver.total_frames, 'Popn stat:', utils.list_stat(popn_fits), 'PG_stat:',
         utils.list_stat(pg_fits), 'Test_trace:', [pprint(i) for i in multiagent_evolver.test_trace[-5:]],
-        'FPS:', pprint(multiagent_evolver.total_frames / (time.time() - time_start)), 'Evo', args.scheme, 'PS:', args.ps)
+        'FPS:', pprint(multiagent_evolver.total_frames / (time.time() - time_start)))
 
         if gen % 5 == 0:
             print("\n")
             print('Test_stat:', utils.list_stat(test_fits), 'SAVETAG:  ', args.savetag)
             print('Weight Stats: min/max/average', pprint(multiagent_evolver.test_bucket[0].get_norm_stats()))
-            print('Buffer Lens:', [ag.buffer[0].__len__() for ag in multiagent_evolver.agents] if args.ps == 'trunk' else [ag.buffer.__len__() for ag in multiagent_evolver.agents])
+            # print('Buffer Lens:', [ag.buffer[0].__len__() for ag in multiagent_evolver.agents])
             print("\n")
             
         if gen % 10 == 0 and args.rollout_size > 0:
@@ -307,7 +321,7 @@ if __name__ == "__main__":
             print('R_mean:', [agent.buffer.rstats['mean'] for agent in multiagent_evolver.agents])
             print('G_mean:', [agent.buffer.gstats['mean'] for agent in multiagent_evolver.agents])
             
-        if multiagent_evolver.total_frames > args.frames_bound:
+        if multiagent_evolver.total_frames > args.iterations_bound:
             break
     
     # kill all processes

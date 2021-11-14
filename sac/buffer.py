@@ -37,6 +37,7 @@ class Buffer():
 
 	def referesh(self):
 		# add ALL EXPERIENCE COLLECTED TO MEMORY concurrently
+		# print("tuples from manager", print(self.tuples))
 		for _ in range(len(self.tuples)):
 			exp = self.tuples.pop()
 			self.data_filter(exp)
@@ -50,6 +51,7 @@ class Buffer():
 
 	def sample(self, batch_size, pr_rew=0.0, pr_global=0.0 ):
 		# uniform sampling
+		# print("self.st:", self.sT)
 		ind = random.sample(range(len(self.sT)), batch_size)
 
 		if pr_global != 0.0 or pr_rew !=0.0:
@@ -64,7 +66,7 @@ class Buffer():
 
 	def tensorify(self):
 		self.referesh() # referesh first
-
+		# print("len:", self.s)
 		if self.__len__() >1:
 			self.sT = torch.tensor(np.vstack(self.s))
 			self.nsT = torch.tensor(np.vstack(self.ns))

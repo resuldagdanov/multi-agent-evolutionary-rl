@@ -25,7 +25,7 @@ class Evolution:
 		self.num_elites = args.num_elites
 		self.num_blends = args.num_blends
 
-		self.scheme = "multipoint" # TODO: will be checked and selected
+		self.scheme = "standard" # TODO: will be checked and selected
 
 		#RL TRACKERS
 		self.rl_sync_pool = []; self.all_offs = []; self.rl_res = {"elites":0.0, 'selects': 0.0, 'discarded':0.0}; self.num_rl_syncs = 0.0001
@@ -443,10 +443,13 @@ class Evolution:
 				self.lineage[replacee] = [sum(lineage_scores) / len(lineage_scores)]  # Initialize as average
 
 			# Elitism step, assigning elite candidates to some unselects
-			for i in elitist_index:
+			# print("LEN:", len(elitist_index), len(unselects), len(offsprings))
+			for i in range(len(elitist_index)):
+				# print(i)
 				if len(unselects) >= 1: replacee = unselects.pop(0)
 				elif len(offsprings) >= 1: replacee = offsprings.pop(0)
 				else: continue
+				# print("REPLACE", replacee)
 				new_elitists.append(replacee)
 				utils.hard_update(target=pop[replacee], source=pop[i])
 				# wwid = genealogy.asexual(int(pop[i].wwid.item()))
@@ -493,6 +496,8 @@ class Evolution:
 				# genealogy.mutation(int(pop[net_i].wwid.item()), gen)
 
 			self.all_offs[:] = offsprings[:]
+
+			# print("ELITISTS:", new_elitists)
 			return new_elitists[0]
 
 		else:
