@@ -51,7 +51,7 @@ class Agent:
             r *= self.args.reward_scaling
             if self.args.use_gpu:
                 s = s.cuda(); ns = ns.cuda(); a = a.cuda(); r = r.cuda(); done = done.cuda(); global_reward = global_reward.cuda()
-            self.algo.update_parameters(s, ns, a, r, done, 1, **td3args)
+            self.algo.update_parameters(s, ns, a, r, done, 1)
 
         # reset new frame counter to 0
         self.buffer.pg_frames = 0
