@@ -28,7 +28,8 @@ def rollout_worker(args, _id, _type, task_pipe, result_pipe, data_bucket, models
         elif _type == 'evo':
             team = [models_bucket[agent_id][popn_id] for agent_id, popn_id in enumerate(teams_blueprint)]
 
-        
+        print("team : ", _type, "\t", team)
+
         fitness = [None for _ in range(args.num_envs)]
         frame=0
 		
@@ -46,13 +47,13 @@ def rollout_worker(args, _id, _type, task_pipe, result_pipe, data_bucket, models
             if _type == 'pg':
                 # print("action pg")
                 joint_action = [team[i][0].noisy_action(joint_state[i, :]).detach().numpy() for i in range(args.num_agents)]
-                # print("pg action:", joint_action)
+                print("pg action:", joint_action)
                 # print("pg done")
             else:
                 # print("action evo")
                 # print("SHAPE:",joint_state[2, :].shape)
                 joint_action = [team[i].clean_action(joint_state[i, :]).detach().numpy() for i in range(args.num_agents)]
-                # print("evo action:", joint_action)
+                print("evo action:", joint_action)
                 # print("evo done")
 
             # print("ACTION RECEIVED")

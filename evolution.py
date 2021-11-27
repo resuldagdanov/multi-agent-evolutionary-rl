@@ -314,7 +314,6 @@ class Evolution:
 
 		self.gen+= 1
 
-
 		#Convert the list of fitness values corresponding to each individual into a float [CCEA Reduction]
 		if isinstance(fitness_evals[0], list):
 			for i in range(len(fitness_evals)):

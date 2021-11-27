@@ -14,11 +14,11 @@ import time
 import os
 import sys
 
+
 parser = argparse.ArgumentParser()
-parser.add_argument('-n_envs', type=int, help='number of parallel environments to be created', default=2)
 parser.add_argument('-n_agents', type=int, help='number of agent in each environment', default=3)
-parser.add_argument('-popsize', type=int, help='evolutionary population size', default=6)
-parser.add_argument('-rollsize', type=int, help='rollout size for agents', default=3) # rollout ?
+parser.add_argument('-rollsize', type=int, help='rollout size for agents', default=3)
+parser.add_argument('-popsize', type=int, help='evolutionary population size', default=9)
 parser.add_argument('-evals', type=int, help='evals to compute a fitness', default=1)
 parser.add_argument('-frames', type=float, help='iteration in millions', default=2)
 parser.add_argument('-filter_c', type=int, help='prob multiplier for evo experiences absorbtion into buffer', default=1)
@@ -50,12 +50,12 @@ class Parameters:
         
         # general hyper-parameters
         self.hidden_size = 256
-        self.actor_lr = 5e-5
-        self.critic_lr = 1e-5
-        self.tau = 1e-5
+        self.actor_lr = 0.0001
+        self.critic_lr = 0.0005
+        self.tau = 0.001
         self.init_w = True
-        self.gamma = 0.5 if self.popn_size > 0 else 0.97 # TODO: check whether gamma is really important for population size
-        self.batch_size = 512
+        self.gamma = 0.97
+        self.batch_size = 64
         self.buffer_size = 100000
         self.reward_scaling = 10.0
         self.action_loss = False
@@ -65,7 +65,7 @@ class Parameters:
         self.alpha = 0.2
         self.target_update_interval = 1
 
-        self.state_dim = 31  # for multiwalker 31 ??
+        self.state_dim = 31
         self.action_dim = 4
         
         # mutation and cros-over parameters
@@ -136,7 +136,7 @@ class MultiagentEvolution:
             
             self.evo_workers = [
                 Process(target=rollout_worker, args=(
-                                                    self.args, _id,'evo', self.evo_task_pipes[_id][1], self.evo_result_pipes[_id][0],
+                                                    self.args, _id, 'evo', self.evo_task_pipes[_id][1], self.evo_result_pipes[_id][0],
                                                     self.buffer_bucket, self.popn_bucket, True))
                                                     for _id in range(args.popn_size * args.num_evals)]
                                                                     
@@ -282,6 +282,7 @@ class MultiagentEvolution:
 if __name__ == "__main__":
     args = Parameters()
     mp.set_start_method('spawn')
+
     # initiate tracker
     test_tracker = utils.Tracker(args.metric_save, [args.log_fname], '.csv')
 
@@ -298,8 +299,8 @@ if __name__ == "__main__":
         popn_fits, pg_fits, test_fits = multiagent_evolver.train(gen, test_tracker)
 
         print('Ep:/Frames', gen, '/', multiagent_evolver.total_frames, 'Popn stat:', utils.list_stat(popn_fits), 'PG_stat:',
-        utils.list_stat(pg_fits), 'Test_trace:', [pprint(i) for i in multiagent_evolver.test_trace[-5:]],
-        'FPS:', pprint(multiagent_evolver.total_frames / (time.time() - time_start)))
+                utils.list_stat(pg_fits), 'Test_trace:', [pprint(i) for i in multiagent_evolver.test_trace[-5:]],
+                'FPS:', pprint(multiagent_evolver.total_frames / (time.time() - time_start)))
 
         if gen % 5 == 0:
             print("\n")
