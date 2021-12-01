@@ -87,12 +87,11 @@ def rollout_worker(args, _id, _type, task_pipe, result_pipe, data_bucket, models
                 # push experiences to main
                 if store_transitions:
                     # TODO: for now all networks are fed from only one replay memory buffer
-                    for env_id, buffer in enumerate(data_bucket):
-                        # print(len(data_bucket[0]), len(data_bucket[1]), len(data_bucket[2]))
+                    for env_id in range(args.num_envs):
                         for entry in rollout_trajectory[env_id]:
                             temp_global_reward = fitness[entry[5]]
                             entry[5] = np.expand_dims(np.array([temp_global_reward], dtype="float32"), 0)
-                            buffer.append(entry)
+                            data_bucket[env_id].append(entry)
 
                 # break all environments as universe is done            
                 break

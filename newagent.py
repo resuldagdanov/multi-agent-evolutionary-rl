@@ -40,7 +40,7 @@ class Agent:
         self.champ_ind = 0
 
     def update_parameters(self):
-        self.buffer.referesh()
+        # self.buffer.referesh()
 
         if self.buffer.__len__() < 10 * self.args.batch_size:
             return

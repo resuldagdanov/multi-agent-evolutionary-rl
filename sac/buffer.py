@@ -38,6 +38,7 @@ class Buffer():
 	def referesh(self):
 		# add ALL EXPERIENCE COLLECTED TO MEMORY concurrently
 		for _ in range(len(self.tuples)):
+			# print(self.tuples)
 			exp = self.tuples.pop()
 			self.data_filter(exp)
 

@@ -22,7 +22,7 @@ writer = SummaryWriter()
 parser = argparse.ArgumentParser()
 parser.add_argument('-n_envs', type=int, help='number of parallel environments to be created', default=3)
 parser.add_argument('-n_agents', type=int, help='number of agent in each environment', default=3)
-parser.add_argument('-popsize', type=int, help='evolutionary population size', default=6)
+parser.add_argument('-popsize', type=int, help='evolutionary population size', default=9)
 parser.add_argument('-rollsize', type=int, help='rollout size for agents', default=3) # rollout ?
 parser.add_argument('-evals', type=int, help='evals to compute a fitness', default=1)
 parser.add_argument('-frames', type=float, help='iteration in millions', default=2)
