@@ -313,7 +313,7 @@ class Evolution:
 		"""
 
 		self.gen+= 1
-
+		# print(fitness_evals)
 
 		#Convert the list of fitness values corresponding to each individual into a float [CCEA Reduction]
 		if isinstance(fitness_evals[0], list):
@@ -498,6 +498,7 @@ class Evolution:
 			self.all_offs[:] = offsprings[:]
 
 			# print("ELITISTS:", new_elitists)
+			# print(new_elitists)
 			return new_elitists[0]
 
 		else:

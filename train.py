@@ -3,6 +3,7 @@ from torch.multiprocessing import Process, Pipe
 from sac.utils import pprint, str2bool
 from rollout_runner import rollout_worker
 from newagent import Agent, TestAgent
+from env_wrapper import MultiWalker
 import sac.utils as utils
 from sac.model import Actor
 from sac.buffer import Buffer
@@ -19,9 +20,9 @@ from tensorboardX import SummaryWriter
 writer = SummaryWriter()
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-n_envs', type=int, help='number of parallel environments to be created', default=2)
+parser.add_argument('-n_envs', type=int, help='number of parallel environments to be created', default=3)
 parser.add_argument('-n_agents', type=int, help='number of agent in each environment', default=3)
-parser.add_argument('-popsize', type=int, help='evolutionary population size', default=9)
+parser.add_argument('-popsize', type=int, help='evolutionary population size', default=6)
 parser.add_argument('-rollsize', type=int, help='rollout size for agents', default=3) # rollout ?
 parser.add_argument('-evals', type=int, help='evals to compute a fitness', default=1)
 parser.add_argument('-frames', type=float, help='iteration in millions', default=2)
@@ -120,10 +121,19 @@ class MultiagentEvolution:
     def __init__(self, args):
         self.args = args
 
-        self.buffer_bucket = [Buffer(args.buffer_size, buffer_gpu=False, filter_c=args.filter_c) for _ in range(args.num_envs)]
+        # initialize the multiagent team of agents
+        self.buffers = [Buffer(args.buffer_size, buffer_gpu=False, filter_c=args.filter_c) for _ in range(args.num_envs)]
+        
+        self.agents = [Agent(self.args, _id, self.buffers[int(_id/3)]) for _id in range(args.num_agents*args.num_envs)]
 
-        self.agents = []
-        self.agents = [Agent(self.args, _id, self.buffer_bucket[int(_id/3)]) for _id in range(args.num_agents*args.num_envs)]
+        self.test_agent = TestAgent(self.args, 991)
+
+        # model bucket as references to the corresponding agent's attributes
+        self.buffer_bucket = [ag.tuples for ag in self.buffers]
+        
+        self.popn_bucket = [ag.popn for ag in self.agents]
+        self.rollout_bucket = [ag.rollout_actor for ag in self.agents]
+        self.test_bucket = self.test_agent.rollout_actor
 
         # Evolutionary workers
         if self.args.popn_size > 0:
@@ -146,6 +156,17 @@ class MultiagentEvolution:
                                                     self.buffer_bucket, self.rollout_bucket, self.args.rollout_size > 0))]            
 
             for worker in self.pg_workers: worker.start()
+
+        # test workers
+        self.test_task_pipes = Pipe()
+        self.test_result_pipes = Pipe()
+
+        self.test_workers = [
+            Process(target=rollout_worker, args=(
+                                                self.args, 0, 'test', self.test_task_pipes[1], self.test_result_pipes[0],
+		                                        None, self.test_bucket, False))]
+                                                
+        for worker in self.test_workers: worker.start()
 
         self.best_score = -999
         self.total_frames = 0
@@ -206,8 +227,14 @@ class MultiagentEvolution:
                 fitness = entry[1][0]
                 frames = entry[2]
 
+                # print(entry)
                 for agent_id, popn_id in enumerate(team):
-                    self.agents[agent_id].fitnesses[popn_id].append(utils.list_mean(fitness))
+                    self.agents[agent_id*3].fitnesses[popn_id].append(utils.list_mean(fitness))
+                    self.agents[agent_id*3+1].fitnesses[popn_id].append(utils.list_mean(fitness))
+                    self.agents[agent_id*3+2].fitnesses[popn_id].append(utils.list_mean(fitness))
+
+                # for agent_id, _ in enumerate(self.agents):
+                #     print(self.agents[agent_id].fitnesses,"\n")
 
                 all_fits.append(utils.list_mean(fitness))
                 self.total_frames += frames

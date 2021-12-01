@@ -28,12 +28,12 @@ def rollout_worker(args, _id, _type, task_pipe, result_pipe, data_bucket, models
             team = [models_bucket[agent_id][popn_id] for agent_id, popn_id in enumerate(teams_blueprint)]
         
         fitness = [None for _ in range(args.num_envs)]
-        frame=0
+        frame = 0
 		
         joint_state = env.reset()
         joint_state = utils.to_tensor(np.array(joint_state))
 
-        rollout_trajectory = [[] for _ in range(args.num_agents)]
+        rollout_trajectory = [[] for _ in range(args.num_envs)]
 
         # unless done
         while True:
@@ -64,12 +64,11 @@ def rollout_worker(args, _id, _type, task_pipe, result_pipe, data_bucket, models
 
 			# push experiences to memory
             if store_transitions:
-                
-                for agent_id in range(args.num_agents):
-                    for env_id in range(args.num_envs):
-
+                # print(done[0])
+                for env_id in range(args.num_envs):
+                    for agent_id in range(args.num_agents):
                         if not done[env_id]:
-                            rollout_trajectory[agent_id].append([
+                            rollout_trajectory[env_id].append([
                                 np.expand_dims(utils.to_numpy(joint_state)[agent_id, env_id, :], 0),
                                 np.expand_dims(utils.to_numpy(next_state)[agent_id, env_id, :], 0),
                                 np.expand_dims(joint_action[agent_id, env_id, :], 0),
@@ -88,8 +87,9 @@ def rollout_worker(args, _id, _type, task_pipe, result_pipe, data_bucket, models
                 # push experiences to main
                 if store_transitions:
                     # TODO: for now all networks are fed from only one replay memory buffer
-                    for agent_id, buffer in enumerate(data_bucket):
-                        for entry in rollout_trajectory[agent_id]:
+                    for env_id, buffer in enumerate(data_bucket):
+                        # print(len(data_bucket[0]), len(data_bucket[1]), len(data_bucket[2]))
+                        for entry in rollout_trajectory[env_id]:
                             temp_global_reward = fitness[entry[5]]
                             entry[5] = np.expand_dims(np.array([temp_global_reward], dtype="float32"), 0)
                             buffer.append(entry)
@@ -97,5 +97,9 @@ def rollout_worker(args, _id, _type, task_pipe, result_pipe, data_bucket, models
                 # break all environments as universe is done            
                 break
 
+        # print(fitness)
 		# send back id, fitness, total length and shaped fitness using the result pipe
+        # for env_id, buffer in enumerate(data_bucket):
+        #     print(buffer[0])
+        
         result_pipe.send([teams_blueprint, [fitness], frame])
